@@ -70,18 +70,26 @@ type DataSelector struct {
 // Implementation of sort.Interface so that we can use built-in sort function (sort.Sort) for sorting SelectableData
 
 // Len returns the length of data inside SelectableData.
-func (self DataSelector) Len() int { return len(self.GenericDataList) }
+func (self DataSelector) Len() int {
+	// log.Printf("dataselect -> Len : %d", len(self.GenericDataList))
+	return len(self.GenericDataList)
+}
 
 // Swap swaps 2 indices inside SelectableData.
 func (self DataSelector) Swap(i, j int) {
+	// log.Print("dataselect -> Swap")
+
 	self.GenericDataList[i], self.GenericDataList[j] = self.GenericDataList[j], self.GenericDataList[i]
 }
 
 // Less compares 2 indices inside SelectableData and returns true if first index is larger.
 func (self DataSelector) Less(i, j int) bool {
+
 	for _, sortBy := range self.DataSelectQuery.SortQuery.SortByList {
 		a := self.GenericDataList[i].GetProperty(sortBy.Property)
 		b := self.GenericDataList[j].GetProperty(sortBy.Property)
+		// log.Printf("dataselect -> Less property=%s,i=%d j=%d, a= %v b=%v", sortBy.Property, i, j, a, b)
+
 		// ignore sort completely if property name not found
 		if a == nil || b == nil {
 			break
@@ -98,12 +106,16 @@ func (self DataSelector) Less(i, j int) bool {
 
 // Sort sorts the data inside as instructed by DataSelectQuery and returns itself to allow method chaining.
 func (self *DataSelector) Sort() *DataSelector {
+	// log.Print("dataselect -> Sort")
+
 	sort.Sort(*self)
 	return self
 }
 
 // Filter the data inside as instructed by DataSelectQuery and returns itself to allow method chaining.
 func (self *DataSelector) Filter() *DataSelector {
+	// log.Print("dataselect -> Filter")
+
 	filteredList := []DataCell{}
 
 	for _, c := range self.GenericDataList {

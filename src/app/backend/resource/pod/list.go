@@ -116,6 +116,7 @@ func GetPodListFromChannels(channels *common.ResourceChannels, dsQuery *datasele
 
 	podList := ToPodList(pods.Items, eventList.Items, nonCriticalErrors, dsQuery, metricClient)
 	podList.Status = getStatus(pods, eventList.Items)
+	// I can see in getStatus all pods are here unsorted
 	return &podList, nil
 }
 
@@ -137,6 +138,8 @@ func ToPodList(pods []v1.Pod, events []v1.Event, nonCriticalErrors []error, dsQu
 	}
 
 	for _, pod := range pods {
+		// It is already sorted here by Phase
+		// log.Print("list.go : ToPodList Status.Phase >>" + pod.Status.Phase)
 		warnings := event.GetPodsEventWarnings(events, []v1.Pod{pod})
 		podDetail := toPod(&pod, metrics, warnings)
 		podList.Pods = append(podList.Pods, podDetail)
@@ -162,7 +165,8 @@ func toPod(pod *v1.Pod, metrics *MetricsByPod, warnings []common.Event) Pod {
 		NodeName:        pod.Spec.NodeName,
 		ContainerImages: common.GetContainerImages(&pod.Spec),
 	}
-
+	// pods are already paginated and sorted but not based on STATUS
+	// log.Print("list.go: toPod >> " + podDetail.Status)
 	if m, exists := metrics.MetricsMap[pod.UID]; exists {
 		podDetail.Metrics = &m
 	}

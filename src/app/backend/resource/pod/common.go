@@ -42,6 +42,8 @@ func getPodStatus(pod v1.Pod) string {
 	readyContainers := 0
 
 	reason := string(pod.Status.Phase)
+	// log.Print("common.go:getPodStatus reason from Phase=" + reason)
+
 	if pod.Status.Reason != "" {
 		reason = pod.Status.Reason
 	}
@@ -116,7 +118,9 @@ func getPodStatus(pod v1.Pod) string {
 	if len(reason) == 0 {
 		reason = string(v1.PodUnknown)
 	}
-
+	// Pods are already sorted here and paginated.
+	// log.Print("common.go:getPodStatus reason=" + reason)
+	// reason = string(pod.Status.Phase) + ":" + reason
 	return reason
 }
 
@@ -177,9 +181,14 @@ func getPodStatusPhase(pod v1.Pod, warnings []common.Event) v1.PodPhase {
 type PodCell v1.Pod
 
 func (self PodCell) GetProperty(name dataselect.PropertyName) dataselect.ComparableValue {
+	// log.Printf("common.go GetProperty name=%s", name)
 	switch name {
 	case dataselect.NameProperty:
 		return dataselect.StdComparableString(self.ObjectMeta.Name)
+	case dataselect.StatusProperty:
+		// log.Print("common.go:GetProperty object meta name=" + self.ObjectMeta.Name)
+		// log.Print("common.go:GetProperty status.phase=" + self.Status.Phase)
+		return dataselect.StdComparableString(getPodStatus(v1.Pod(self)))
 	case dataselect.CreationTimestampProperty:
 		return dataselect.StdComparableTime(self.ObjectMeta.CreationTimestamp.Time)
 	case dataselect.NamespaceProperty:
@@ -211,6 +220,7 @@ func fromCells(cells []dataselect.DataCell) []v1.Pod {
 	std := make([]v1.Pod, len(cells))
 	for i := range std {
 		std[i] = v1.Pod(cells[i].(PodCell))
+		// It is already paginated and sorted here
 	}
 	return std
 }
@@ -237,6 +247,10 @@ func getStatus(list *v1.PodList, events []v1.Event) common.ResourceStatus {
 	}
 
 	for _, pod := range list.Items {
+		// Here all pods are used
+		// and from log I see they are not sorted here
+		// This is to count the pod statusses
+		// log.Print("common.go getStatus triggered for all pods pod.Status.Phase " + pod.Status.Phase)
 		warnings := event.GetPodsEventWarnings(events, []v1.Pod{pod})
 		switch getPodStatusPhase(pod, warnings) {
 		case v1.PodFailed:
